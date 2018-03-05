@@ -16,6 +16,7 @@ function newPlayer(characterClass, level) {
 }
 
 const defaultState = {
+    scenarioLevel: 1,
     levelAdjustment: 0,
     selectableClasses: CLASS_NAMES.reduce((acc, c) => {acc[c] = true; return acc;}, {}),
     players: {},
@@ -24,6 +25,7 @@ const defaultState = {
 
 const SET_LEVEL = "players/level/set";
 const SET_LEVEL_ADJUSTMENT = "players/level/setAdjustment";
+const SET_BASE_SCENARIO_LEVEL = "players/level/setBaseScenarioLevel";
 const TOGGLE_STATUS_EFFECT = "players/statusEffect/toggle";
 const SET_HP = "players/hp/set";
 const SET_INITIATIVE = "players/initiative/set";
@@ -91,6 +93,13 @@ export const reducer = (state = defaultState, action) => {
                 levelAdjustment: action.levelAdjustment,
             };
         }
+        case SET_BASE_SCENARIO_LEVEL:
+        {
+            return {
+                ...state,
+                scenarioLevel: action.baseScenarioLevel,
+            }
+        }
         case TOGGLE_STATUS_EFFECT:
         {
             const player = state.players[action.name];
@@ -141,7 +150,7 @@ export const reducer = (state = defaultState, action) => {
         }
         default: return state;
     }
-}
+};
 
 export function setLevelAction(dispatch, name, level) {
     dispatch({type: SET_LEVEL, name, level});
@@ -149,6 +158,10 @@ export function setLevelAction(dispatch, name, level) {
 
 export function setLevelAdjustmentAction(dispatch, levelAdjustment) {
     dispatch({type: SET_LEVEL_ADJUSTMENT, levelAdjustment});
+}
+
+export function setBaseScenarioLevelAction(dispatch, baseScenarioLevel) {
+    dispatch({type: SET_BASE_SCENARIO_LEVEL, baseScenarioLevel});
 }
 
 export function toggleStatusEffectAction(dispatch, name, statusEffect) {
@@ -163,18 +176,6 @@ export function setIntiativeAction(dispatch, initiative) {
     dispatch({type: SET_INITIATIVE, initiative});
 }
 
-function calculateScenarioLevel(players) {
-    const playerNames = Object.keys(players);
-    if (playerNames.length === 0) {
-        return 0;
-    }
-    const averageLevel = playerNames.reduce((sum, p) => {
-        const player = players[p];
-        return sum + player.level;
-    }, 0) / playerNames.length;
-    return Math.ceil(averageLevel / 2);
-}
-
 export const selectors = {
     selectableClasses: (state) => {
         return Object.keys(state.players.selectableClasses).filter((c) => {
@@ -182,9 +183,11 @@ export const selectors = {
         });
     },
     numPlayers: (state) => Object.keys(state.players.players).length,
-    baseScenarioLevel: (state) => calculateScenarioLevel(state.players.players),
+    baseScenarioLevel: (state) => {
+        return state.players.scenarioLevel
+    },
     // + level adjustment
     scenarioLevel: (state) => {
-        return calculateScenarioLevel(state.players.players) + state.players.levelAdjustment;
+        return state.players.scenarioLevel + state.players.levelAdjustment;
     },
 };
